@@ -1,0 +1,80 @@
+[tool.poetry]
+name = "adventofcode"
+version = "0.2023.1"
+description = "Code for the 2023 version of Advent of Code."
+authors = ["Thomas Camminady <0milieux_member@icloud.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+ruff = "^0.1.5"
+ruff-lsp = "^0.0.45"
+numpy = "^1.26.2"
+beautifulsoup4 = "^4.12.2"
+requests = "^2.31.0"
+ipykernel = "^6.26.0"
+rich = "^13.7.0"
+
+
+
+[build-system]
+requires = ["poetry-core>=1.2.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.8
+target-version = "py38"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = []
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
