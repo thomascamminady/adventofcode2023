@@ -1,1 +1,5 @@
 poetry.lock
+__pycache__
+helper/__pycache__
+
+adventofcode/helper/cookie.txt
