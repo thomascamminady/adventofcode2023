@@ -1,11 +1,13 @@
 import urllib.request
 from typing import Any
+import os
 
 import numpy as np
 import requests
 from bs4 import BeautifulSoup
 from bs4.element import Comment
 from rich import print
+import pathlib
 
 
 def website_to_text(day: int, year: int = 2023) -> None:
@@ -35,6 +37,8 @@ def save_riddle_input(
     day: int, riddle: str, folder_prefix: str = "adventofcode/riddle_inputs"
 ) -> None:
     """Save riddle input to a file"""
+    if not os.path.exists(folder_prefix):
+        pathlib.Path(folder_prefix).mkdir(parents=True, exist_ok=True)
     with open(f"{folder_prefix}/{day}.txt", "w") as f:
         f.write(riddle)
 
