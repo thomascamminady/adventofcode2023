@@ -10,4 +10,4 @@ git:
 	poetry run git add .
 	# pre-commit run --all-files
 	poetry run git commit -m "Day $(shell date +%d)." --allow-empty
-	poetry run git push
+	# poetry run git push
