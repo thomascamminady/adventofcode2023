@@ -51,6 +51,10 @@ def get_cookie() -> str:
 
 
 def get_riddle_input(day: int, year: int = 2023) -> str:
+    if os.path.exists(file := f"adventofcode/riddle_inputs/{day}.txt"):
+        with open(file, "r") as f:
+            return f.read()
+
     url = f"https://adventofcode.com/{year}/day/{day}/input"
     riddle_input = get_text_from_url(url)
     return riddle_input

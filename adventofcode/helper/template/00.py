@@ -23,15 +23,16 @@ def riddle2(riddle_input: str) -> int | str:
     return answer
 
 
-def aoc(show: bool = False, save: bool = True):
+def aoc(show: bool = False, save: bool = True, example: bool = False):
     day = get_day(__file__)
     riddle_input = get_riddle_input(day)
-    # placeholder for example
-    # riddle_input = """"""
+    example_riddle_input = """"""
     if save:
         save_riddle_input(day, riddle_input)
     if show:
         print(riddle_input)
+    if example:
+        riddle_input = example_riddle_input
 
     answer1 = riddle1(riddle_input)
     print(answer1)
