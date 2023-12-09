@@ -71,27 +71,63 @@ def riddle2(riddle_input: str) -> int | str:
     assert instructions is not None
 
     wcc_Subgraphs = get_weakly_connected_subgraphs(G)
-    # plt.close("all")
-    # for _ in srGs:
-    #     fig, ax = plt.subplots()
-    #     nx.draw_networkx(_)
-    # plt.show()
+    plt.close("all")
+    for _ in wcc_Subgraphs:
+        fig, ax = plt.subplots()
+        color_map = []
+        for node in _:
+            if node[2] == "Z":
+                color_map.append("blue")
+            elif node[2] == "A":
+                color_map.append("green")
+            else:
+                color_map.append("gray")
+        nx.draw(
+            _, node_color=color_map, with_labels=True, pos=nx.kamada_kawai_layout(_)
+        )
+        # plt.show()
+        # nx.draw_networkx(_)
+    plt.show()
 
     summary = []
     for subgraph in wcc_Subgraphs:
         # print("/")
         # print(g.nodes())
+        # print([_ for _ in subgraph.nodes() if _[2] == "A"])
+        # print([_ for _ in subgraph.nodes() if _[2] == "Z"])
         la = [_ for _ in subgraph.nodes() if _[2] == "A"][0]
         lz = [_ for _ in subgraph.nodes() if _[2] == "Z"][0]
         sp = nx.shortest_path_length(subgraph, la, lz)
         summary.append((la, lz, sp))
+        print((la, lz, sp))
+    # print(summary)
 
     periods = [s[2] for s in summary]
-    logging.info("hi")
     period = 1
     for v in periods:
         period *= v
-    for _ in range(1_000):
+    print(period)
+
+    starts = [_ for _ in succesors.keys() if _[2] == "A"]
+    counters = []
+    print(starts)
+    for start in starts:
+        orig = start
+        counter = 0
+        while start[2] != "Z":
+            if instructions[counter % len(instructions)] == "L":
+                start = succesors[start][0]
+            else:
+                start = succesors[start][1]
+            counter += 1
+        print((orig, start, counter))
+        counters.append(counter)
+    # print(counters)
+    from math import lcm
+
+    print(lcm(*counters))
+
+    for _ in range(1, 1_000):
         if instructions[_ * period % len(instructions)] == "R":
             return _ * period
     return -1
@@ -122,8 +158,8 @@ XXX = (XXX, XXX)"""
     if example:
         riddle_input = example_riddle_input
 
-    answer1 = riddle1(riddle_input)
-    print(answer1)
+    # answer1 = riddle1(riddle_input)
+    # print(answer1)
 
     answer2 = riddle2(riddle_input)
     print(answer2)
