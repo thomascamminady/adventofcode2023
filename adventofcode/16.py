@@ -30,7 +30,7 @@ def aoc(
     save: bool = True,
     show: bool = False,
     example: bool = False,
-    log: bool = False,
+    log: bool = True,
 ):
     day = get_day(__file__)
     riddle_input = get_riddle_input(day)
