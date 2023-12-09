@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from rich import print
+import logging
 import fire
 from adventofcode.helper.io import get_day, get_riddle_input, save_riddle_input
+
+
+EXAMPLE = """"""
 
 
 def riddle1(riddle_input: str) -> int | str:
@@ -23,16 +26,22 @@ def riddle2(riddle_input: str) -> int | str:
     return answer
 
 
-def aoc(show: bool = False, save: bool = True, example: bool = False):
+def aoc(
+    save: bool = True,
+    show: bool = False,
+    example: bool = False,
+    log: bool = False,
+):
     day = get_day(__file__)
     riddle_input = get_riddle_input(day)
-    example_riddle_input = """"""
+    if log:
+        logging.basicConfig(level=logging.INFO)
     if save:
         save_riddle_input(day, riddle_input)
     if show:
         print(riddle_input)
     if example:
-        riddle_input = example_riddle_input
+        riddle_input = EXAMPLE
 
     answer1 = riddle1(riddle_input)
     print(answer1)
@@ -40,6 +49,10 @@ def aoc(show: bool = False, save: bool = True, example: bool = False):
     if answer1 != 0:
         answer2 = riddle2(riddle_input)
         print(answer2)
+
+
+def print(_):
+    logging.info(_)
 
 
 if __name__ == "__main__":

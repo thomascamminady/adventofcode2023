@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "adventofcode"
-version = "0.2023.07"
+version = "0.2023.08"
 description = "Code for the 2023 version of Advent of Code."
 authors = ["Thomas Camminady <0milieux_member@icloud.com>"]
 license = "MIT"
@@ -17,6 +17,9 @@ rich = "^13.7.0"
 pyclean = "^2.7.6"
 fire = "^0.5.0"
 numba = "^0.58.1"
+networkx = "^3.2.1"
+matplotlib = "^3.8.2"
+scipy = "^1.11.4"
 
 
 

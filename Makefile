@@ -3,6 +3,9 @@
 run:
 	poetry run python adventofcode/$(shell date +%d).py
 
+copy:
+	poetry run python adventofcode/helper/template/copy_files.py 
+
 git:
 	poetry run pyclean .
 	poetry version 0.$(shell date +%Y).$(shell date +%d)
