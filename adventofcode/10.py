@@ -68,8 +68,12 @@ def where(dir: str) -> tuple[int, int]:
             raise KeyError
 
 
-def ij2idx(i, j):
+def ij2idx(i: int, j: int) -> int:
     return i * 140 + j
+
+
+def idx2ij(idx) -> tuple[int, int]:
+    return idx // 140, idx % 140
 
 
 def riddle1(riddle_input: str) -> int | str:
@@ -93,12 +97,48 @@ def riddle1(riddle_input: str) -> int | str:
 
 
 def riddle2(riddle_input: str) -> int | str:
-    answer = 0
+    edges = []
+    starti, startj = 0, 0
+    chars = [[_ for _ in line] for line in riddle_input.splitlines()]
+    for i in range(140):
+        for j in range(140):
+            c = chars[i][j]
+            for direction in connections(c):
+                di, dj = where(direction)
+                if 0 <= i + di < 140 and 0 <= j + dj < 140:
+                    if opposite(direction) in connections(chars[i + di][j + dj]):
+                        edges.append((ij2idx(i + di, j + dj), ij2idx(i, j)))
 
-    for i, line in enumerate(riddle_input.splitlines()):
-        pass
+            if c == "S":
+                starti, startj = i, j
 
-    return answer
+    G = nx.from_edgelist(edges)
+    cycle = nx.find_cycle(G, ij2idx(starti, startj))
+    nodes = []
+    for e in cycle:
+        nodes.append(e[0])
+        nodes.append(e[1])
+    nodes = list(set(nodes))
+    nodesij = [idx2ij(_) for _ in nodes]
+
+    inside = find_squares_inside_curve(140, nodesij)
+
+    print(nodes)
+    import numpy as np
+
+    M = np.zeros((140, 140))
+    for idx in cycle:
+        i, j = idx2ij(idx[0])
+        M[i, j] = 1
+        i, j = idx2ij(idx[1])
+        M[i, j] = 1
+    for i, j in inside:
+        M[i, j] = 2
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    ax.imshow(M)
+    plt.show()
 
 
 def aoc(
