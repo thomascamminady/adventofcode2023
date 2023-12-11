@@ -73,8 +73,6 @@ def ij2idx(i, j):
 
 
 def riddle1(riddle_input: str) -> int | str:
-    answer = 0
-
     edges = []
     starti, startj = 0, 0
     chars = [[_ for _ in line] for line in riddle_input.splitlines()]
