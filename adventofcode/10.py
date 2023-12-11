@@ -18,6 +18,56 @@ EXAMPLE = """"""
 # S is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
 
 
+def connections(char: str) -> list[str]:
+    match char:
+        case "|":
+            return ["u", "d"]
+        case "-":
+            return ["l", "r"]
+        case "L":
+            return ["u", "r"]
+        case "J":
+            return ["u", "l"]
+        case "7":
+            return ["l", "d"]
+        case "F":
+            return ["r", "d"]
+        case "S":
+            return ["u", "d", "l", "r"]
+        case ".":
+            return []
+        case _:
+            raise KeyError
+
+
+def opposite(dir: str) -> str:
+    match dir:
+        case "u":
+            return "d"
+        case "d":
+            return "u"
+        case "l":
+            return "r"
+        case "r":
+            return "l"
+        case _:
+            raise KeyError
+
+
+def where(dir: str) -> tuple[int, int]:
+    match dir:
+        case "u":
+            return (-1, 0)
+        case "d":
+            return (1, 0)
+        case "l":
+            return (0, -1)
+        case "r":
+            return (0, 1)
+        case _:
+            raise KeyError
+
+
 def ij2idx(i, j):
     return i * 140 + j
 
@@ -27,56 +77,21 @@ def riddle1(riddle_input: str) -> int | str:
 
     edges = []
     starti, startj = 0, 0
+    chars = [[_ for _ in line] for line in riddle_input.splitlines()]
+    for i in range(140):
+        for j in range(140):
+            c = chars[i][j]
+            for direction in connections(c):
+                di, dj = where(direction)
+                if 0 <= i + di < 140 and 0 <= j + dj < 140:
+                    if opposite(direction) in connections(chars[i + di][j + dj]):
+                        edges.append((ij2idx(i + di, j + dj), ij2idx(i, j)))
 
-    charts = [[_ for _ in line] for line in riddle_input.splitlines()]
-    n = len(charts)
-    for i in range(n):
-        for j in range(n):
-            c = charts[i][j]
-            if c == ".":
-                continue
-            elif c == "|":
-                edges.append((ij2idx(i - 1, j), ij2idx(i, j)))
-                edges.append((ij2idx(i, j), ij2idx(i + 1, j)))
-            elif c == "-":
-                edges.append((ij2idx(i, j - 1), ij2idx(i, j)))
-                edges.append((ij2idx(i, j), ij2idx(i, j + 1)))
-            elif c == "L":
-                edges.append((ij2idx(i - 1, j), ij2idx(i, j)))
-                edges.append((ij2idx(i, j), ij2idx(i, j + 1)))
-            elif c == "J":
-                edges.append((ij2idx(i - 1, j), ij2idx(i, j)))
-                edges.append((ij2idx(i, j), ij2idx(i, j - 1)))
-            elif c == "7":
-                edges.append((ij2idx(i, j - 1), ij2idx(i, j)))
-                edges.append((ij2idx(i, j), ij2idx(i + 1, j)))
-            elif c == "F":
-                edges.append((ij2idx(i, j + 1), ij2idx(i, j)))
-                edges.append((ij2idx(i, j), ij2idx(i + 1, j)))
-            elif c == "S":
+            if c == "S":
                 starti, startj = i, j
 
-    if charts[starti - 1][startj + 0] in (["|", "7", "F"]):
-        print("down")
-        edges.append((ij2idx(starti, startj), ij2idx(starti - 1, startj)))
-    if charts[starti + 1][startj + 0] in (["|", "L", "J"]):
-        print("up")
-        edges.append((ij2idx(starti, startj), ij2idx(starti + 1, startj)))
-    if charts[starti][startj - 1] in (["-", "F", "L"]):
-        print("left")
-        edges.append((ij2idx(starti, startj), ij2idx(starti, startj - 1)))
-    if charts[starti][startj + 1] in (["-", "7", "J"]):
-        print("right")
-        edges.append((ij2idx(starti, startj), ij2idx(starti, startj + 1)))
-
     G = nx.from_edgelist(edges)
-    print(nx.find_cycle(G, ij2idx(starti, startj)))
     return len(nx.find_cycle(G, ij2idx(starti, startj))) // 2
-
-    import matplotlib.pyplot as plt
-
-    plt.show()
-    return answer
 
 
 def riddle2(riddle_input: str) -> int | str:
