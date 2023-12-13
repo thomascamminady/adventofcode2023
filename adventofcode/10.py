@@ -5,17 +5,18 @@ import fire
 from adventofcode.helper.io import get_day, get_riddle_input, save_riddle_input
 import networkx as nx
 
-EXAMPLE = """"""
+EXAMPLE = """.F----7F7F7F7F-7....
+.|F--7||||||||FJ....
+.||.FJ||||||||L7....
+FJL7L7LJLJ||LJ.L-7..
+L--J.L7...LJS7F-7L7.
+....F-J..F7FJ|L7L7L7
+....L7.F7||L7|.L7L7|
+.....|FJLJ|FJ|F7|.LJ
+....FJL-7.||.||||...
+....L---J.LJ.LJLJ..."""
 
-
-# | is a vertical pipe connecting north and south.
-# - is a horizontal pipe connecting east and west.
-# L is a 90-degree bend connecting north and east.
-# J is a 90-degree bend connecting north and west.
-# 7 is a 90-degree bend connecting south and west.
-# F is a 90-degree bend connecting south and east.
-# . is ground; there is no pipe in this tile.
-# S is the starting position of the animal; there is a pipe on this tile, but your sketch doesn't show what shape the pipe has.
+DIMENSION = 140
 
 
 def connections(char: str) -> list[str]:
@@ -69,28 +70,33 @@ def where(dir: str) -> tuple[int, int]:
 
 
 def ij2idx(i: int, j: int) -> int:
-    return i * 140 + j
+    return i * DIMENSION + j
 
 
 def idx2ij(idx) -> tuple[int, int]:
-    return idx // 140, idx % 140
+    return idx // DIMENSION, idx % DIMENSION
 
 
 def riddle1(riddle_input: str) -> int | str:
     edges = []
     starti, startj = 0, 0
     chars = [[_ for _ in line] for line in riddle_input.splitlines()]
-    for i in range(140):
-        for j in range(140):
+    for i in range(DIMENSION):
+        for j in range(DIMENSION):
             c = chars[i][j]
+            # print(i, j, c)
+            # print(c == "S")
+
             for direction in connections(c):
                 di, dj = where(direction)
-                if 0 <= i + di < 140 and 0 <= j + dj < 140:
+                if 0 <= i + di < DIMENSION and 0 <= j + dj < DIMENSION:
                     if opposite(direction) in connections(chars[i + di][j + dj]):
                         edges.append((ij2idx(i + di, j + dj), ij2idx(i, j)))
 
             if c == "S":
                 starti, startj = i, j
+    # print(edges)
+    # print(starti, startj)
 
     G = nx.from_edgelist(edges)
     return len(nx.find_cycle(G, ij2idx(starti, startj))) // 2
@@ -100,12 +106,12 @@ def riddle2(riddle_input: str) -> int | str:
     edges = []
     starti, startj = 0, 0
     chars = [[_ for _ in line] for line in riddle_input.splitlines()]
-    for i in range(140):
-        for j in range(140):
+    for i in range(DIMENSION):
+        for j in range(DIMENSION):
             c = chars[i][j]
             for direction in connections(c):
                 di, dj = where(direction)
-                if 0 <= i + di < 140 and 0 <= j + dj < 140:
+                if 0 <= i + di < DIMENSION and 0 <= j + dj < DIMENSION:
                     if opposite(direction) in connections(chars[i + di][j + dj]):
                         edges.append((ij2idx(i + di, j + dj), ij2idx(i, j)))
 
@@ -113,27 +119,85 @@ def riddle2(riddle_input: str) -> int | str:
                 starti, startj = i, j
 
     G = nx.from_edgelist(edges)
-    cycle = nx.find_cycle(G, ij2idx(starti, startj))
+    cycle = nx.find_cycle(G, ij2idx(starti, startj), orientation="original")
+    for i in range(1, len(cycle)):
+        assert cycle[i - 1][1] == cycle[i][0]
+
+    # print(cycle)
     nodes = []
     for e in cycle:
         nodes.append(e[0])
         nodes.append(e[1])
+
     nodes = list(set(nodes))
-    nodesij = [idx2ij(_) for _ in nodes]
 
-    inside = find_squares_inside_curve(140, nodesij)
-
-    print(nodes)
     import numpy as np
 
-    M = np.zeros((140, 140))
-    for idx in cycle:
+    M = np.zeros((DIMENSION, DIMENSION))
+    for n, idx in enumerate(cycle):
         i, j = idx2ij(idx[0])
         M[i, j] = 1
         i, j = idx2ij(idx[1])
         M[i, j] = 1
-    for i, j in inside:
-        M[i, j] = 2
+
+    for c in cycle:
+        oldi, oldj = idx2ij(c[0])
+        newi, newj = idx2ij(c[1])
+
+        print(oldi, oldj, newi, newj)
+
+        # left
+        direction = +1
+        if newi == oldi + 1:
+            print("down")
+            # if M[newi, newj + 1] == 0:
+            #     M[newi, newj + 1] = 2
+            if M[newi - 1, newj + 1] == 0:
+                M[newi - 1, newj + 1] = 2
+        elif newi == oldi - 1:
+            print("up")
+            # if M[newi, newj - 1] == 0:
+            #     M[newi, newj - 1] = 2
+            if M[newi + 1, newj - 1] == 0:
+                M[newi + 1, newj - 1] = 2
+        elif newj == oldj + 1:
+            print("right")
+            # if M[newi - 1, newj] == 0:
+            #     M[newi - 1, newj] = 2
+            if M[newi - 1, newj - 1] == 0:
+                M[newi - 1, newj - 1] = 2
+        elif newj == oldj - 1:
+            print("down")
+            # if M[newi + 1, newj] == 0:
+            #     M[newi + 1, newj] = 2
+            if M[newi - 1, newj + 1] == 0:
+                M[newi - 1, newj + 1] = 2
+        else:
+            raise ValueError
+
+    # 535 too high
+    # # spread
+    for _ in range(150):
+        for j in range(1, DIMENSION - 1):
+            for i in range(1, DIMENSION - 1):
+                if M[i, j] >= 2:
+                    for deltai in [-1, 0, 1]:
+                        for deltaj in [-1, 0, 1]:
+                            if M[i + deltai, j + deltaj] == 0:
+                                M[i + deltai, j + deltaj] = 3
+    M[2, 2] = -1
+    M[130, 2] = -1
+    M[130, 130] = -1
+    for _ in range(150):
+        for j in range(1, DIMENSION - 1):
+            for i in range(1, DIMENSION - 1):
+                if M[i, j] == -1:
+                    for deltai in [-1, 0, 1]:
+                        for deltaj in [-1, 0, 1]:
+                            if M[i + deltai, j + deltaj] > 1:
+                                M[i + deltai, j + deltaj] = -1
+    print(np.sum(M > 1))
+
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots()
