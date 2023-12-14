@@ -51,9 +51,5 @@ def aoc(
         print(answer2)
 
 
-def print(_):
-    logging.info(_)
-
-
 if __name__ == "__main__":
     fire.Fire(aoc)
