@@ -121,11 +121,20 @@ def riddle1(riddle_input: str) -> int | str:
         for j in range(history.shape[1]):
             history[i, j] = "-"
     history[0, 0] = "#"
-    history[1, 0] = "#"
 
-    psi[1, 0, 2] = 1
+    psi[0, 0, 1] = 1
     print(history.shape)
     for n in range(100_000):
+        if n == 0:
+            for i in range(psi.shape[0]):
+                for j in range(psi.shape[1]):
+                    before = psi[i, j, :].copy()
+                    for k, beforek in enumerate(before):
+                        if beforek != 0:
+                            change = collision_kernel(k, grid[i, j])
+                            for l, changel in enumerate(change):
+                                psi[i, j, l] += beforek * changel
+
         # print("\n\n")
         print(n, "  ", np.sum(history == "#"))
         new_psi = np.zeros_like(psi)
