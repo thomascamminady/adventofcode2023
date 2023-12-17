@@ -30,16 +30,17 @@ def input_to_int_matrix(riddle_input: str) -> np.ndarray:
 
 
 def get_day(file: str) -> int:
-    return int(file.split("/")[-1].split(".")[0])
+    return int(file.split("/")[-2])
 
 
 def save_riddle_input(
-    day: int, riddle: str, folder_prefix: str = "adventofcode/riddle_inputs"
+    day: int, riddle: str, folder_prefix: str = "adventofcode/"
 ) -> None:
     """Save riddle input to a file"""
+    folder_prefix += f"""{str(day).zfill(2)}"""
     if not os.path.exists(folder_prefix):
         pathlib.Path(folder_prefix).mkdir(parents=True, exist_ok=True)
-    with open(f"{folder_prefix}/{day}.txt", "w") as f:
+    with open(f"{folder_prefix}/_riddle.txt", "w") as f:
         f.write(riddle)
 
 
@@ -50,8 +51,14 @@ def get_cookie() -> str:
     return cookie
 
 
+def get_example_input(day: int, year: int = 2023) -> str:
+    file = f"adventofcode/{str(day).zfill(2)}/_example.txt"
+    with open(file, "r") as f:
+        return f.read()
+
+
 def get_riddle_input(day: int, year: int = 2023) -> str:
-    if os.path.exists(file := f"adventofcode/riddle_inputs/{day}.txt"):
+    if os.path.exists(file := f"adventofcode/{str(day).zfill(2)}/_riddle.txt"):
         with open(file, "r") as f:
             return f.read()
 

@@ -27,13 +27,18 @@ def riddle2(riddle_input: str) -> int | str:
     return answer
 
 
-def aoc(save: bool = True, show: bool = False, example: bool = False) -> None:
+def aoc(
+    save: bool = True,
+    show: bool = False,
+    example: bool = False,
+    log: bool = True,
+):
     day = get_day(__file__)
     if example:
         riddle_input = get_example_input(day)
     else:
         riddle_input = get_riddle_input(day)
-    if save and not example:
+    if save:
         save_riddle_input(day, riddle_input)
     if show:
         print(riddle_input)
