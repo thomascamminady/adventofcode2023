@@ -1,4 +1,4 @@
-from __future__ import annotations
+# from __future__ import annotations
 
 import fire
 import numpy as np
@@ -65,56 +65,41 @@ def collision_kernel(k: int, gridij: str) -> tuple[int, int, int, int]:
     raise ValueError
 
 
-# def collision(i: int, j: int, k: int, gridij: str) -> list[tuple[int, int, int]]:
-#     vi, vj = velocity(k)
-#     print(gridij)
-#     if gridij == ".":
-#         return [(i, j, k)]
-#     elif (k == 0 or k == 2) and gridij == "|":
-#         return [(i + vi, j + vj, k)]
-#     elif (k == 1 or k == 3) and gridij == "-":
-#         return [(i + vi, j + vj, k)]
-#     elif (k == 0 or k == 2) and gridij == "-":
-#         return [(i, j - 1, 3), (i, j + 1, 1)]
-#     elif (k == 1 or k == 3) and gridij == "|":
-#         return [(i - 1, j, 0), (i + 1, j, 2)]
-#     elif gridij == "/":
-#         print("here")
-#         if k == 0:
-#             return [(i, j + 1, 1)]
-#         elif k == 1:
-#             return [(i - 1, j, 0)]
-#         elif k == 2:
-#             return [(i, j - 1, 3)]
-#         elif k == 3:
-#             return [(i + 1, j, 2)]
-#         else:
-#             raise KeyError
-
-#     elif gridij == "\\":
-#         if k == 0:
-#             return [(i, j - 1, 3)]
-#         elif k == 1:
-#             return [(i + 1, j, 2)]
-#         elif k == 2:
-#             return [(i, j + 1, 1)]
-#         elif k == 3:
-#             return [(i - 1, j, 0)]
-#         else:
-#             raise KeyError
-#     else:
-#         raise KeyError
+def inbounds(i: int, j: int, psi) -> bool:
+    return (0 <= i < psi.shape[0]) and (0 <= j < psi.shape[1])
 
 
-def riddle1(riddle_input: str) -> int | str:
-    answer = 0
+def do_collision(psi, grid):
+    indices = np.argwhere(np.sum(psi, 2) != 0)
+    for i, j in indices:
+        before = [_ for _ in psi[i, j, :]]
+        for k, beforek in enumerate(before):
+            if beforek != 0:
+                change = collision_kernel(k, grid[i, j])
+                for l, changel in enumerate(change):
+                    psi[i, j, l] += beforek * changel
+    return psi
+
+
+def do_stream(psi, new_psi):
+    indices = np.argwhere(np.sum(psi, 2) != 0)
+    for k in range(psi.shape[2]):
+        vi, vj = velocity(k)
+        for i, j in indices:
+            if psi[i, j, k] != 0:
+                if inbounds(i + vi, j + vj, psi):
+                    new_psi[i + vi, j + vj, k] += psi[i, j, k]
+    return new_psi
+
+
+def solve(i0, j0, k0, riddle_input) -> int:
+    # from pyinstrument import Profiler
+
+    # profiler = Profiler()
+    # profiler.start()
 
     grid = np.array([[_ for _ in line] for line in riddle_input.splitlines()])
-    print(grid)
     psi = np.zeros((grid.shape[0], grid.shape[1], 4), dtype=int)
-
-    def inbounds(i: int, j: int) -> bool:
-        return (0 <= i < psi.shape[0]) and (0 <= j < psi.shape[1])
 
     history = np.zeros_like(grid, dtype=str)
     for i in range(history.shape[0]):
@@ -122,57 +107,63 @@ def riddle1(riddle_input: str) -> int | str:
             history[i, j] = "-"
     history[0, 0] = "#"
 
-    psi[0, 0, 1] = 1
-    print(history.shape)
-    for n in range(100_000):
+    psi[i0, j0, k0] = 1
+    # print(history.shape)
+    count = {}
+    for n in range(1_000_000):
+        if np.sum(psi) == 0:
+            break
         if n == 0:
-            for i in range(psi.shape[0]):
-                for j in range(psi.shape[1]):
-                    before = psi[i, j, :].copy()
-                    for k, beforek in enumerate(before):
-                        if beforek != 0:
-                            change = collision_kernel(k, grid[i, j])
-                            for l, changel in enumerate(change):
-                                psi[i, j, l] += beforek * changel
-
+            psi = do_collision(psi, grid)
         # print("\n\n")
-        print(n, "  ", np.sum(history == "#"))
+        count[n] = np.sum(history == "#")
+        if n > 120:
+            if count[n - 120] == count[n]:
+                break
+
         new_psi = np.zeros_like(psi)
-        for k in range(psi.shape[2]):
-            vi, vj = velocity(k)
-            for i in range(psi.shape[0]):
-                for j in range(psi.shape[1]):
-                    if psi[i, j, k] != 0:
-                        if inbounds(i + vi, j + vj):
-                            new_psi[i + vi, j + vj, k] += psi[i, j, k]
+        new_psi = do_stream(psi, new_psi)
         psi = np.copy(new_psi)
 
-        for i in range(psi.shape[0]):
-            for j in range(psi.shape[1]):
-                before = psi[i, j, :].copy()
-                for k, beforek in enumerate(before):
-                    if beforek != 0:
-                        change = collision_kernel(k, grid[i, j])
-                        for l, changel in enumerate(change):
-                            psi[i, j, l] += beforek * changel
+        psi = do_collision(psi, grid)
+        indices = np.argwhere(np.sum(psi, 2) != 0)
         for k in range(psi.shape[2]):
-            for i in range(psi.shape[0]):
-                for j in range(psi.shape[1]):
-                    if psi[i, j, k] != 0:
-                        history[i, j] = "#"
-                        # history[i, j] = str(n % 10)
-    print(history)
+            for i, j in indices:
+                if psi[i, j, k] != 0:
+                    history[i, j] = "#"
+                    # history[i, j] = str(n % 10)
+    # profiler.stop()
+    # profiler.print()
+    # profiler.open_in_browser()
     return np.sum(history == "#")
-    return answer
+
+
+def riddle1(riddle_input: str) -> int | str:
+    z = solve(0, 0, 1, riddle_input)
+
+    return z
 
 
 def riddle2(riddle_input: str) -> int | str:
-    answer = 0
-
-    for i, line in enumerate(riddle_input.splitlines()):
-        pass
-
-    return answer
+    results = []
+    for j in range(110):
+        z = solve(0, j, 2, riddle_input)
+        print(j, z)
+        results.append(z)
+    for j in range(110):
+        z = solve(109, j, 0, riddle_input)
+        print(j, z)
+        results.append(z)
+    for i in range(110):
+        z = solve(i, 0, 1, riddle_input)
+        print(i, z)
+        results.append(z)
+    for i in range(110):
+        z = solve(i, 109, 3, riddle_input)
+        print(i, z)
+        results.append(z)
+    print(results)
+    return max(results)
 
 
 def aoc(save: bool = True, show: bool = False, example: bool = False) -> None:
