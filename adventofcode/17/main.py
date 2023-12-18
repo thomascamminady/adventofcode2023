@@ -10,7 +10,6 @@ from adventofcode.helper.io import (
     save_riddle_input,
 )
 import networkx as nx
-import numpy as np
 
 CONNECTIONS = {
     ((-3, 0), (-2, 0), (-1, 0), (0, 0)): [
@@ -188,6 +187,8 @@ for key, values in CONNECTIONS.items():
         assert v[0] == key[1]
         assert v[1] == key[2]
         assert v[2] == key[3]
+        delta = [v[3][0] - key[3][0], v[3][1] - key[3][1]]
+        assert delta in [[0, 1], [0, -1], [-1, 0], [1, 0]]
 
 
 def offset_connections(
@@ -215,14 +216,6 @@ def idx2ij(idx: int, M) -> tuple[int, int]:
 
 
 def riddle1(riddle_input: str) -> int | str:
-    for key, values in CONNECTIONS.items():
-        for v in values:
-            assert v[0] == key[1]
-            assert v[1] == key[2]
-            assert v[2] == key[3]
-
-    answer = 0
-
     M = input_to_int_matrix(riddle_input)
     n, m = M.shape[0] - 1, M.shape[1] - 1
     G = nx.DiGraph()
@@ -237,69 +230,47 @@ def riddle1(riddle_input: str) -> int | str:
                             is_valid = False
                     if is_valid:
                         w = (
-                            M[value[1][0], value[1][1]]
+                            M[value[0][0], value[0][1]]
+                            + M[value[1][0], value[1][1]]
                             + M[value[2][0], value[2][1]]
                             + M[value[3][0], value[3][1]]
                         )
                         G.add_edge(key, value, weight=w)
+
     # print(G)
-    start_nodes = [_ for _ in G.nodes() if (0, 0) == _[0]]
+    _start = (0, 0)
+    _end = (n, m)
+    start_nodes = [_ for _ in G.nodes() if _start == _[0]]
     for node in start_nodes:
         G.add_edge((0, 0), node, weight=0)
 
-    end_nodes = [_ for _ in G.nodes() if (n, m) == _[-1]]
+    end_nodes = [_ for _ in G.nodes() if _end == _[-1]]
     for node in end_nodes:
         G.add_edge(node, (n, m), weight=0)
 
-    path = nx.shortest_path(G, source=(0, 0), target=(n, m), weight="weight")
-    print(path)
+    path = nx.shortest_path(
+        G,
+        source=_start,
+        target=_end,
+        weight="weight",
+    )
     for i, (pi, pj) in enumerate(zip(path[1:-2], path[2:-1])):
-        print(i, pi, pj)
         assert pi[1] == pj[0]
         assert pi[2] == pj[1]
         assert pi[3] == pj[2]
-    Y = np.zeros_like(M, dtype=str)
-    for i in range(M.shape[0]):
-        for j in range(M.shape[1]):
-            Y[i, j] = str(M[i, j])
+
     nodes = []
-    for node in path[1:-1]:
-        # print(node)
-        delta = [node[-1][0] - node[-2][0], node[-1][1] - node[-2][1]]
-        if delta == [0, 1]:
-            sign = ">"
-        elif delta == [0, -1]:
-            sign = "<"
-        elif delta == [-1, 0]:
-            sign = "^"
-        elif delta == [1, 0]:
-            sign = "v"
-        else:
-            raise ValueError
-        for i, j in node:
-            # Y[i, j] = "#"
-            if (i, j) != (0, 0):
-                nodes.append((i, j))
-        Y[node[-1][0], node[-1][1]] = sign
-
-    nodes_set = set(nodes)
-
-    for i in range(M.shape[0]):
-        for j in range(M.shape[1]):
-            print(Y[i, j], end="")
-        print()
-    print(nodes)
-    return sum([M[i, j] for i, j in nodes_set])
-    # return answer
+    for p in path[1:-1]:
+        nodes.extend(list(p))
+    nodes = set(nodes)
+    nodes.remove((0, 0))
+    return sum([M[i, j] for i, j in nodes])  # type:ignore
 
 
 def riddle2(riddle_input: str) -> int | str:
-    answer = 0
+    M = input_to_int_matrix(riddle_input)
 
-    for i, line in enumerate(riddle_input.splitlines()):
-        pass
-
-    return answer
+    return 0
 
 
 def aoc(save: bool = True, show: bool = False, example: bool = False) -> None:
@@ -313,12 +284,11 @@ def aoc(save: bool = True, show: bool = False, example: bool = False) -> None:
     if show:
         print(riddle_input)
 
-    answer1 = riddle1(riddle_input)
-    print(answer1)
+    # answer1 = riddle1(riddle_input)
+    # print(answer1)
 
-    if answer1 != 0:
-        answer2 = riddle2(riddle_input)
-        print(answer2)
+    answer2 = riddle2(riddle_input)
+    print(answer2)
 
 
 if __name__ == "__main__":
@@ -327,3 +297,4 @@ if __name__ == "__main__":
     # 964 too high
     # 962 too high
     # 959
+    # 903 wrong
