@@ -45,6 +45,7 @@ def parse(riddle_input) -> tuple[dict[Any, Any], list[Any]]:
                 )
                 for _ in instructions
             ]
+            # print(line, (instructions, otherwise))
             workflows[name] = (instructions, otherwise)
         if not firsthalf:
             tmp = {}
@@ -61,24 +62,26 @@ def apply_workflows(
     workflows: dict[str, tuple[list[Instruction], str]], item: dict, current: str
 ) -> bool:
     instructions, otherwise = workflows[current]
-    print(current)
+    # print("--")
+    # print(current)
     for ins in instructions:
-        print(ins)
+        # print(ins, item)
         if ins.op == ">":
+            # print(">", item[ins.field] > ins.value)
             win = item[ins.field] > ins.value
         else:
+            # print("<", item[ins.field] < ins.value)
             win = item[ins.field] < ins.value
-        print(win)
+        # print(win)
         if win:
-            if item[ins.field] > ins.value:
-                if ins.reroute == "A":
-                    return True
-                elif ins.reroute == "R":
-                    return False
-                else:
-                    return apply_workflows(workflows, item, ins.reroute)
+            if ins.reroute == "A":
+                return True
+            elif ins.reroute == "R":
+                return False
+            else:
+                return apply_workflows(workflows, item, ins.reroute)
 
-    print(otherwise)
+    # print("else", otherwise)
     if otherwise == "A":
         return True
     elif otherwise == "R":
@@ -91,15 +94,16 @@ def riddle1(riddle_input: str) -> int | str:
     answer = 0
 
     workflows, items = parse(riddle_input)
-    print(items)
+    # print(items)
     for item in items:
-        print(" ")
-        print(" ")
-        print(item)
+        # print(" ")
+        # print(" ")
+        # print(item)
 
         y = apply_workflows(workflows, item, "in")
-
-        print("result: ", y)
+        if y:
+            answer += sum(item.values())
+        # print("result: ", y)
     return answer
 
 
