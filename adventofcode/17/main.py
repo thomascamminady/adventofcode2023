@@ -269,6 +269,41 @@ def riddle1(riddle_input: str) -> int | str:
 
 def riddle2(riddle_input: str) -> int | str:
     M = input_to_int_matrix(riddle_input)
+    print(M.shape)
+
+    def find_paths(N):
+        def is_valid(x, y):
+            return 0 <= x <= N and 0 <= y <= N
+
+        def backtrack(x, y, path, is_horizontal):
+            if x == N and y == N:
+                paths.append(path.copy())
+                return
+
+            step_range = range(4, 11)
+            if is_horizontal:
+                for step in step_range:
+                    if is_valid(x + step, y):
+                        backtrack(
+                            x + step, y, path + [(x + step, y)], not is_horizontal
+                        )
+            else:
+                for step in step_range:
+                    if is_valid(x, y + step):
+                        backtrack(
+                            x, y + step, path + [(x, y + step)], not is_horizontal
+                        )
+
+        paths = []
+        backtrack(0, 0, [(0, 0)], True)  # Start with a horizontal move
+        return paths
+
+    # Example Usage
+    N = 40  # Replace with the desired N value
+    paths = find_paths(N)
+    print("Number of paths:", len(paths))
+    for path in paths[:5]:  # Print first 5 paths as an example
+        print(path)
 
     return 0
 
