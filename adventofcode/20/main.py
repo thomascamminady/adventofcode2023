@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 import fire
 from adventofcode.helper.io import (
@@ -11,43 +12,80 @@ from adventofcode.helper.io import (
 from rich import print
 
 
+@dataclass
+class Signal:
+    source: str
+    target: str
+    high_pulse: bool
+
+    def __repr__(self) -> str:
+        return (
+            f"""{self.source} -{"high" if self.high_pulse else "low"}-> {self.target}"""
+        )
+
+
 class Module(ABC):
     def __init__(self, name: str, connections: list[str]) -> None:
         self.name = name
         self.connections = connections
         self.on = False
 
+    def receives(self, source: str, high_pulse: bool) -> list[Signal]:
+        outcome = self._receives(source, high_pulse)
+        return outcome
+
     @abstractmethod
-    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, str, bool]]:
+    def reset(self) -> None:
         pass
+
+    @abstractmethod
+    def _receives(self, source: str, high_pulse: bool) -> list[Signal]:
+        pass
+
+    def __repr__(self) -> str:
+        return f"{self.name}: state: {self.on}, conn:{self.connections},{type(self)}"
 
 
 class Broadcast(Module):
-    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, str, bool]]:
-        return [(self.name, _, high_pulse) for _ in self.connections]
+    def _receives(self, source: str, high_pulse: bool) -> list[Signal]:
+        return [Signal(self.name, _, high_pulse) for _ in self.connections]
+
+    def reset(self) -> None:
+        pass
 
 
 class Conjunction(Module):
     def __init__(self, name: str, connections: list[str]) -> None:
-        self.remembers_high = [False for _ in connections]
+        self.inputs = []
+        self.remembers_high = []
+
         super().__init__(name, connections)
 
-    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, str, bool]]:
-        for i in range(len(self.connections)):
-            if self.connections[i] == source:
-                self.remembers_high[i] = high_pulse
+    def reset(self) -> None:
+        self.remembers_high = [False for _ in self.remembers_high]
+
+    def initialize_inputs(self, inputs: list[str]):
+        self.inputs = inputs
+        self.remembers_high = [False for _ in self.inputs]
+
+    def _receives(self, source: str, high_pulse: bool) -> list[Signal]:
+        idx = self.inputs.index(source)
+        self.remembers_high[idx] = high_pulse
 
         if all(self.remembers_high):
-            return [(self.name, _, False) for _ in self.connections]
+            return [Signal(self.name, _, False) for _ in self.connections]
         else:
-            return [(self.name, _, True) for _ in self.connections]
+            return [Signal(self.name, _, True) for _ in self.connections]
 
 
 class FlipFlop(Module):
-    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, str, bool]]:
+    def reset(self) -> None:
+        self.on = False
+
+    def _receives(self, source: str, high_pulse: bool) -> list[Signal]:
         if not high_pulse:
-            self.state = not self.state
-            return [(self.name, _, self.state) for _ in self.connections]
+            self.on = not self.on
+            return [Signal(self.name, _, self.on) for _ in self.connections]
         return []
 
 
@@ -60,7 +98,6 @@ class ModuleFactory:
         name, connections = line[1:].split("->")
         name = name.strip()
         connections = [_.strip() for _ in connections.split(",")]
-        print(line, name, connections)
         if sign == "b":
             return Broadcast("broadcaster", connections)
         elif sign == "%":
@@ -77,30 +114,77 @@ def parse(riddle_input: str) -> dict[str, Module]:
     for i, line in enumerate(riddle_input.splitlines()):
         module = mf.create(line)
         modules[module.name] = module
+    for name, module in modules.items():
+        if isinstance(module, Conjunction):
+            inputs = []
+            for _name, _module in modules.items():
+                if name in _module.connections:
+                    inputs.append(_name)
+            modules[name].initialize_inputs(inputs)
     return modules
 
 
 def riddle1(riddle_input: str) -> int | str:
-    answer = 0
     modules = parse(riddle_input)
-    print(modules)
-    stack: list[tuple[str, str, bool]] = [("god", "broadcaster", True)]
-    while len(stack) > 0:
-        source, target, pulse = stack.pop(0)
-
-        outcome = modules[target].receives(source, pulse)
-        print(outcome)
-        stack.extend(outcome)
-    return answer
+    number_high_pulses = 0
+    number_low_pulses = 0
+    for _ in range(1_000):
+        # print(_)
+        number_low_pulses += 1
+        stack: list[Signal] = [Signal("button", "broadcaster", False)]
+        while len(stack) > 0:
+            # print(f"""stack:  {",   ".join([str(_) for _ in stack])}""")
+            signal = stack.pop(0)
+            if signal.target in modules.keys():
+                outcome = modules[signal.target].receives(
+                    signal.source, signal.high_pulse
+                )
+                for _ in outcome:
+                    if _.high_pulse:
+                        number_high_pulses += 1
+                    else:
+                        number_low_pulses += 1
+                stack.extend(outcome)
+    return number_high_pulses * number_low_pulses
 
 
 def riddle2(riddle_input: str) -> int | str:
-    answer = 0
-
-    for i, line in enumerate(riddle_input.splitlines()):
-        pass
-
-    return answer
+    modules = parse(riddle_input)
+    number_high_pulses = 0
+    number_low_pulses = 0
+    print(modules)
+    for _ in range(100000000):
+        print(_)
+        number_low_pulses += 1
+        stack: list[Signal] = [Signal("button", "broadcaster", False)]
+        while len(stack) > 0:
+            # print(stack)
+            # print(f"""stack:  {",   ".join([str(_) for _ in stack])}""")
+            signal = stack.pop(0)
+            if signal.target in modules.keys():
+                outcome = modules[signal.target].receives(
+                    signal.source, signal.high_pulse
+                )
+                for _ in outcome:
+                    if _.high_pulse:
+                        number_high_pulses += 1
+                    else:
+                        number_low_pulses += 1
+                stack.extend(outcome)
+            elif signal.target == "rx" and not signal.high_pulse:
+                for key in modules.keys():
+                    modules[key].reset()
+                print(
+                    number_high_pulses,
+                    number_low_pulses,
+                    number_high_pulses + number_low_pulses,
+                )
+                break
+                number_high_pulses = 0
+                number_low_pulses = 0
+            # else:
+            #     print(signal)
+    return number_high_pulses * number_low_pulses
 
 
 def aoc(save: bool = True, show: bool = False, example: bool = False) -> None:
