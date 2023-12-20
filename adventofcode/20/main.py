@@ -18,13 +18,13 @@ class Module(ABC):
         self.on = False
 
     @abstractmethod
-    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, bool]]:
+    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, str, bool]]:
         pass
 
 
 class Broadcast(Module):
-    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, bool]]:
-        return [(_, high_pulse) for _ in self.connections]
+    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, str, bool]]:
+        return [(self.name, _, high_pulse) for _ in self.connections]
 
 
 class Conjunction(Module):
@@ -32,22 +32,22 @@ class Conjunction(Module):
         self.remembers_high = [False for _ in connections]
         super().__init__(name, connections)
 
-    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, bool]]:
+    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, str, bool]]:
         for i in range(len(self.connections)):
             if self.connections[i] == source:
                 self.remembers_high[i] = high_pulse
 
         if all(self.remembers_high):
-            return [(_, False) for _ in self.connections]
+            return [(self.name, _, False) for _ in self.connections]
         else:
-            return [(_, True) for _ in self.connections]
+            return [(self.name, _, True) for _ in self.connections]
 
 
 class FlipFlop(Module):
-    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, bool]]:
+    def receives(self, source: str, high_pulse: bool) -> list[tuple[str, str, bool]]:
         if not high_pulse:
             self.state = not self.state
-            return [(_, self.state) for _ in self.connections]
+            return [(self.name, _, self.state) for _ in self.connections]
         return []
 
 
@@ -76,7 +76,7 @@ def parse(riddle_input: str) -> dict[str, Module]:
     modules = {}
     for i, line in enumerate(riddle_input.splitlines()):
         module = mf.create(line)
-        modules[module.name] = modules
+        modules[module.name] = module
     return modules
 
 
@@ -84,6 +84,13 @@ def riddle1(riddle_input: str) -> int | str:
     answer = 0
     modules = parse(riddle_input)
     print(modules)
+    stack: list[tuple[str, str, bool]] = [("god", "broadcaster", True)]
+    while len(stack) > 0:
+        source, target, pulse = stack.pop(0)
+
+        outcome = modules[target].receives(source, pulse)
+        print(outcome)
+        stack.extend(outcome)
     return answer
 
 
